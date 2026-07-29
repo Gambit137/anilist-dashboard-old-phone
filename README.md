@@ -40,8 +40,16 @@ It should also work on many Android phones and tablets, but some device-specific
 The interface uses viewport-relative sizing, so it adapts to different screens. Very short, very wide, or tablet-sized displays may still need small CSS adjustments.
 
 ## Running the dashboard
+1. Copy `index.html` and the `assets` folder to the same folder on the Android device.
+2. In Fully Kiosk Browser, set the **Start URL** to the local file path, for example:
 
-The dashboard can be opened directly as a local `index.html` file or hosted on any static web server, including GitHub Pages.
+```text
+file:///storage/emulated/0/Download/anilist-dashboard/index.html
+```
+
+The exact path may differ depending on the device and folder location. Grant Fully Kiosk Browser permission to access local files if prompted.
+
+The dashboard can also be hosted on any static web server, including GitHub Pages.
 
 ## Fully Kiosk Browser
 
