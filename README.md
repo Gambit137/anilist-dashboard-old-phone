@@ -90,7 +90,7 @@ const CONFIG = {
 
 | Setting | Purpose |
 |---|---|
-| `username` | Public AniList username whose list and statistics are displayed |
+| `username` | Public AniList username whose list and statistics are displayed (AniList profile needs to be set to *Public* or *Semi-Public*) |
 | `dataUrl` | `"auto"` checks for `/data.json` first and otherwise queries AniList directly; use `null` to always query AniList directly |
 | `screenSeconds` | Time each screen stays visible |
 | `seasonPerPage` | Number of seasonal titles shown per page |
