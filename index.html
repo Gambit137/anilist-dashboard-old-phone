@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07070c">
+<title>AniList Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --ink:        #ffffff;
+  --ink-soft:   #a4a7bd;
+  --ink-faint:  #6b6e84;
+  --base:       #07070c;
+  --accent:     #e8a33d;
+  --accent-rgb: 232, 163, 61;
+  --accent-lift: 245, 200, 130;
+  --wash:       12, 14, 24;
+  --line:       rgba(255,255,255,0.10);
+
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body:    "Inter", system-ui, -apple-system, sans-serif;
+
+  --pad: 3.2vh;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--base);
+  color: var(--ink);
+  font-family: var(--body);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#wash {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 18% 50%, rgba(var(--wash), 0.85) 0%, rgba(var(--wash), 0) 70%),
+    linear-gradient(160deg, rgba(var(--wash), 0.55) 0%, var(--base) 62%);
+  transition: background 1.6s ease;
+  z-index: 0;
+}
+
+#stack { position: fixed; inset: 0; z-index: 1; }
+
+.stage {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.015);
+  transition: opacity 620ms cubic-bezier(.22,.61,.36,1),
+              transform 900ms cubic-bezier(.22,.61,.36,1);
+  will-change: opacity, transform;
+  pointer-events: none;
+}
+.stage.live { opacity: 1; transform: none; }
+
+.card { display: flex; height: 100%; }
+
+.poster {
+  height: 100%;
+  aspect-ratio: 460 / 650;
+  flex: none;
+  background-size: cover;
+  background-position: center;
+  background-color: #171a26;
+  position: relative;
+}
+
+.poster::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset -14px 0 26px -14px rgba(0,0,0,0.85);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  padding: var(--pad) calc(var(--pad) * 1.15) calc(var(--pad) * 0.85);
+  display: flex;
+  flex-direction: column;
+}
+
+.eyebrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 2.7vh;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.eyebrow .tag { color: var(--accent); }
+.eyebrow .meta { color: var(--ink-faint); letter-spacing: 0.04em; font-weight: 500; }
+.eyebrow .meta .warn,
+.season-head .meta .warn { color: #ff8a7a; }
+.eyebrow .meta .batt.warn,
+.season-head .meta .batt.warn { color: #ffb066; }
+.eyebrow .meta .dot,
+.season-head .meta .dot { opacity: 0.4; margin: 0 0.5em; }
+.season-head .meta .pages { color: var(--ink-faint); }
+
+.title {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 9.2vh;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin-top: 2.4vh;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.title.long { font-size: 7.6vh; }
+.title.longer { font-size: 6.2vh; }
+
+.subtitle {
+  margin-top: 1.2vh;
+  font-size: 3vh;
+  color: var(--ink-soft);
+}
+
+.countdown {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 11vh;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin-top: 3.4vh;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+.countdown .unit {
+  font-size: 0.46em;
+  color: var(--ink-faint);
+  margin-left: 0.06em;
+  margin-right: 0.34em;
+  letter-spacing: 0;
+}
+.countdown .unit:last-child { margin-right: 0; }
+
+.countdown .secs { color: var(--accent); }
+
+.standby {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 7.6vh;
+  line-height: 1.05;
+  margin-top: 3.4vh;
+  letter-spacing: -0.02em;
+}
+.standby.ready { color: var(--accent); }
+
+.info .when {
+  margin-top: 1.6vh;
+  font-size: 3vh;
+  color: var(--ink-soft);
+}
+
+.foot { margin-top: auto; padding-top: 2.4vh; }
+
+.progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 2.6vh;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+.progress-row .count {
+  font-family: var(--display);
+  font-size: 3.6vh;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.progress-row .count small { color: var(--ink-faint); font-size: 0.72em; }
+
+.bar {
+  margin-top: 1.2vh;
+  height: 0.75vh;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.13);
+  overflow: hidden;
+}
+.bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width 700ms cubic-bezier(.22,.61,.36,1);
+}
+
+.queue { display: flex; gap: 1.1vh; margin-top: 2.6vh; }
+.queue .thumb {
+  height: 11.5vh;
+  aspect-ratio: 460 / 650;
+  border-radius: 0.9vh;
+  background-size: cover;
+  background-position: center;
+  background-color: #171a26;
+  opacity: 0.5;
+}
+.queue .more {
+  height: 11.5vh;
+  aspect-ratio: 460 / 650;
+  border-radius: 0.9vh;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  color: var(--ink-faint);
+  font-size: 2.6vh;
+  font-family: var(--display);
+}
+
+.season { height: 100%; overflow: hidden; padding: var(--pad) calc(var(--pad) * 1.15); display: flex; flex-direction: column; }
+
+.season-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.season-head h1 {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 5.4vh;
+  letter-spacing: -0.015em;
+}
+.season-head .starts-in {
+  font-size: 2.9vh;
+  font-weight: 500;
+  color: var(--accent);
+  margin-left: 1.6vh;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.season-head .meta { font-size: 2.7vh; color: var(--ink-faint); font-weight: 500; }
+
+.grid {
+  flex: 1;
+  min-height: 0;
+  margin-top: 2.4vh;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2.2vh;
+  align-content: start;
+}
+
+.tile { display: flex; flex-direction: column; min-width: 0; align-items: flex-start; }
+
+.tile .art {
+  position: relative;
+  height: 70vh;
+  aspect-ratio: 460 / 650;
+  flex: none;
+  align-self: center;
+  border-radius: 1.1vh;
+  background-size: cover;
+  background-position: center;
+  background-color: #171a26;
+}
+.tile .date .score { color: var(--ink-faint); font-family: var(--body); font-weight: 400; }
+.tile .date {
+  margin-top: 1.4vh;
+  width: 100%;
+  font-family: var(--display);
+  font-size: 2.9vh;
+  font-weight: 500;
+  color: var(--accent);
+}
+.tile h2 {
+  margin-top: 1.4vh;
+  width: 100%;
+  font-size: 3.3vh;
+  font-weight: 500;
+  line-height: 1.22;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tile .overlay {
+  position: absolute;
+  left: 0.8vh;
+  right: 0.8vh;
+  bottom: 0.8vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6vh;
+}
+.tile .band {
+  max-width: 100%;
+  height: 4.2vh;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.6vh;
+  overflow: hidden;
+}
+.tile .band span {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  height: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 3vh;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0 0.6em;
+  border-radius: 0.6vh;
+  background: rgba(6, 6, 12, 0.66);
+  color: #eef0f8;
+}
+.tile .band .air { background: rgba(var(--accent-rgb), 0.92); color: #0a0a10; }
+.tile .band .rate { color: rgba(255,255,255,0.8); }
+
+.tile h2 {
+  margin-top: 1.4vh;
+  width: 100%;
+  font-size: 3.3vh;
+  font-weight: 500;
+  line-height: 1.22;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notice {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 8vh;
+}
+.notice h1 {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 7vh;
+  letter-spacing: -0.02em;
+}
+.notice p { margin-top: 2vh; font-size: 3.2vh; color: var(--ink-soft); max-width: 62ch; line-height: 1.5; }
+.notice code {
+  font-family: ui-monospace, Menlo, monospace;
+  background: rgba(255,255,255,0.08);
+  padding: 0.2em 0.45em;
+  border-radius: 0.4em;
+  font-size: 0.9em;
+}
+
+#zones { position: fixed; inset: 0; z-index: 3; display: flex; }
+#zones > button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: transparent;
+}
+#zones > button:focus-visible { outline: 2px solid var(--accent); outline-offset: -6px; }
+
+#flash-left, #flash-right {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 16vh;
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms ease;
+}
+#flash-left  { left: 0;  background: linear-gradient(to right, rgba(255,255,255,0.16), transparent); }
+#flash-right { right: 0; background: linear-gradient(to left,  rgba(255,255,255,0.16), transparent); }
+.lit { opacity: 1 !important; transition: opacity 90ms ease !important; }
+
+.pending {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 8.4vh;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  margin-top: 3vh;
+  color: var(--accent);
+}
+.pending-sub {
+  margin-top: 1.4vh;
+  font-size: 3vh;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.pending-sub b { font-weight: 500; color: var(--ink); }
+
+.today {
+  margin-left: 1.4vh;
+  padding: 0.35em 0.75em;
+  border-radius: 99px;
+  background: var(--accent);
+  color: #0a0a10;
+  font-size: 0.82em;
+  letter-spacing: 0.1em;
+}
+
+.chips { display: flex; gap: 1.1vh; margin-top: 1.8vh; flex-wrap: wrap; }
+.chips span {
+  font-size: 3.3vh;
+  font-weight: 500;
+  padding: 0.34em 0.9em;
+  border-radius: 99px;
+  white-space: nowrap;
+
+  color: rgb(var(--accent-lift));
+  background: rgba(var(--accent-rgb), 0.24);
+  border: 1px solid rgba(var(--accent-rgb), 0.5);
+}
+.chips span.studio {
+  color: var(--ink-faint);
+  background: transparent;
+  border-color: rgba(255,255,255,0.06);
+}
+
+.synopsis {
+  margin-top: 2.4vh;
+  font-size: 3.5vh;
+  line-height: 1.42;
+  color: var(--ink-soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.upcoming { margin-top: 1.6vh; font-size: 2.4vh; color: var(--ink-faint); }
+.upcoming b { color: var(--ink-soft); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.episodes { display: flex; gap: 0.6vh; margin-top: 1.4vh; }
+
+.episodes i {
+  flex: 1 1 0;
+  max-width: 5.5vh;
+  height: 2vh;
+  border-radius: 0.4vh;
+  background: rgba(var(--accent-rgb), 0.14);
+  border: 0.28vh solid rgba(var(--accent-rgb), 0.62);
+}
+.episodes i.out {
+  background: rgba(var(--accent-rgb), 0.55);
+  border-color: rgb(var(--accent-lift));
+}
+.episodes i.seen {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.faces { display: flex; gap: 1vh; margin-top: 2.2vh; }
+.faces .face {
+  width: 9vh;
+  height: 9vh;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center top;
+  background-color: #171a26;
+  opacity: 0.9;
+}
+
+.stats { height: 100%; padding: var(--pad) calc(var(--pad) * 1.15); display: flex; flex-direction: column; }
+.stats > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex: none;
+}
+.stats > header h1 {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 4.6vh;
+  letter-spacing: -0.015em;
+}
+.stats > header .meta { font-size: 2.7vh; color: var(--ink-faint); font-weight: 500; }
+
+.bento {
+  flex: 1;
+  min-height: 0;
+  margin-top: 2vh;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 1.3vh;
+}
+.box {
+
+  background: rgba(255,255,255,0.075);
+  border: 1px solid rgba(255,255,255,0.24);
+  border-radius: 1.3vh;
+  padding: 1.5vh 1.7vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  overflow: hidden;
+}
+.box .num {
+  font-family: var(--display);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  font-size: 6.2vh;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.box .num.text { font-size: 3.4vh; letter-spacing: -0.01em; }
+.box .num.small { font-size: 4.6vh; }
+.box .num small { font-size: 0.36em; color: var(--ink-faint); margin-left: 0.25em; letter-spacing: 0; }
+.box .cap {
+  margin-top: 0.7vh;
+  font-size: 2.2vh;
+  color: var(--ink-soft);
+  line-height: 1.25;
+}
+
+.box.week {
+  grid-column: span 2;
+  grid-row: span 2;
+  border-color: rgba(var(--accent-rgb), 0.45);
+  background: rgba(var(--accent-rgb), 0.12);
+  justify-content: center;
+}
+.box.week .num { font-size: 22vh; color: var(--accent); }
+.box.week .cap { font-size: 2.9vh; color: var(--ink); margin-top: 1.4vh; }
+.box.week .tag {
+  font-size: 2.4vh;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1.4vh;
+}
+
+.box.wide { grid-column: span 2; }
+.box.week .tag { font-size: 2.3vh; }
+
+.person { display: flex; height: 100%; }
+.person .portrait {
+  height: 100%;
+  opacity: 1;
+  transition: opacity 260ms ease;
+  aspect-ratio: 460 / 650;
+  flex: none;
+  background-size: cover;
+  background-position: center top;
+  background-color: #171a26;
+}
+.person .about {
+  flex: 1;
+  min-width: 0;
+  padding: var(--pad) calc(var(--pad) * 1.15);
+  display: flex;
+  flex-direction: column;
+}
+.person .name {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 7vh;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-top: 1.8vh;
+}
+.person .native { margin-top: 1vh; font-size: 3.2vh; color: var(--ink-soft); }
+.person .chips.facts { margin-top: 1.6vh; }
+
+.person .chips.detail { margin-top: 1.2vh; }
+.person .chips.detail span {
+  color: var(--ink);
+
+  background: rgba(0,0,0,0.38);
+  border-color: rgba(255,255,255,0.3);
+  font-weight: 500;
+  font-size: 2.8vh;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.person .chips.detail span i {
+  font-style: normal;
+  color: var(--ink-faint);
+  margin-right: 0.5em;
+}
+.person .bio {
+  margin-top: 1.8vh;
+  font-size: 2.9vh;
+  line-height: 1.42;
+  color: var(--ink-faint);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.person .from { margin-top: auto; padding-top: 2vh; display: flex; gap: 2vh; align-items: flex-end; }
+.person .from .mini {
+  width: 18vh;
+  aspect-ratio: 460 / 650;
+  border-radius: 1vh;
+  background-size: cover;
+  background-position: center;
+  background-color: #171a26;
+  flex: none;
+}
+.person .from .which { min-width: 0; padding-bottom: 0.5vh; }
+.person .from .which .cap {
+  font-size: 2.6vh;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+.person .from .which .show {
+  margin-top: 0.6vh;
+  font-size: 4.2vh;
+  font-weight: 500;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.person .from .which .sub { margin-top: 0.7vh; font-size: 3vh; color: var(--ink-faint); }
+
+.pill {
+  display: inline-block;
+  font-size: 3vh;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0.32em 0.9em;
+  border-radius: 99px;
+  background: var(--accent);
+  color: #0a0a10;
+}
+.reason { margin-top: 2.2vh; font-size: 2.8vh; color: var(--ink-soft); line-height: 1.4; }
+
+.soon {
+  font-family: var(--display);
+  font-size: 3.2vh;
+  color: #ffd166;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 1vh;
+}
+
+.eyebrow .meta .weekly,
+.season-head .meta .weekly {
+  font-family: var(--display);
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: rgba(255,255,255,0.09);
+  padding: 0.1em 0.55em;
+  border-radius: 99px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage, #wash, .bar > i { transition-duration: 1ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="wash"></div>
+<div id="stack">
+  <div class="stage" id="stage-a"></div>
+  <div class="stage" id="stage-b"></div>
+</div>
+<div id="flash-left"></div>
+<div id="flash-right"></div>
+<div id="zones">
+  <button id="zone-left"  aria-label="Switch view"></button>
+  <button id="zone-right" aria-label="Next title"></button>
+</div>
+
+<script>
+"use strict";
+
+const CONFIG = {
+  // Your AniList username.
+  username: "Your_Username",
+
+  dataUrl: "auto",
+
+  screenSeconds: 20,
+  seasonPerPage: 4,
+  refreshMinutes: 30,
+
+  queueSize: 5,
+
+  extraPortraits: true,
+  portraitSeconds: 4.5,
+
+  debug: true,
+
+  airingOnly: false,
+};
+
+const API = "https://graphql.anilist.co";
+const STORE_KEY = "anilist-dashboard-cache-v1";
+
+const MEDIA_FIELDS = `
+  id status episodes format averageScore genres
+  title { romaji english }
+  coverImage { extraLarge large color }
+  season seasonYear
+  description(asHtml: false)
+  studios(isMain: true) { nodes { name } }
+  nextAiringEpisode { episode airingAt }
+  characters(sort: [ROLE, RELEVANCE], perPage: 6) {
+    nodes { id name { full } image { large } }
+  }
+`;
+
+const Q_LISTS = `
+query ($name: String) {
+  User(name: $name) { id }
+  MediaListCollection(userName: $name, type: ANIME) {
+    lists {
+      status
+      entries {
+        progress
+        media { ${MEDIA_FIELDS} }
+      }
+    }
+  }
+}`;
+
+const Q_SEASON = `
+query ($season: MediaSeason, $year: Int) {
+  Page(page: 1, perPage: 50) {
+    media(season: $season, seasonYear: $year, type: ANIME,
+          sort: POPULARITY_DESC, isAdult: false) {
+      id format averageScore genres
+      title { romaji english }
+      coverImage { extraLarge large color }
+      startDate { year month day }
+    }
+  }
+}`;
+
+const Q_RECOMMENDED = `
+query ($ids: [Int]) {
+  Page(page: 1, perPage: 20) {
+    media(id_in: $ids, type: ANIME) {
+      id
+      recommendations(sort: RATING_DESC, perPage: 6) {
+        nodes {
+          rating
+          mediaRecommendation {
+            ${MEDIA_FIELDS}
+            startDate { year month day }
+          }
+        }
+      }
+    }
+  }
+}`;
+
+const Q_STATS = `
+query ($name: String) {
+  User(name: $name) {
+    statistics {
+      anime {
+        count
+        episodesWatched
+        minutesWatched
+        meanScore
+        genres(limit: 1, sort: COUNT_DESC) { genre count }
+        studios(limit: 1, sort: COUNT_DESC) { count studio { name } }
+        releaseYears(sort: COUNT_DESC) { releaseYear count }
+        formats(sort: COUNT_DESC) { format count }
+      }
+    }
+  }
+}`;
+
+const Q_RANDOM = `
+query ($page: Int) {
+  Page(page: $page, perPage: 12) {
+    pageInfo { lastPage }
+    media(type: ANIME, isAdult: false, sort: ID,
+          format_in: [TV, TV_SHORT, MOVIE, ONA, OVA]) {
+      id status episodes format averageScore genres
+      title { romaji english }
+      coverImage { extraLarge large color }
+      season seasonYear
+      description(asHtml: false)
+      studios(isMain: true) { nodes { name } }
+      startDate { year month day }
+    }
+  }
+}`;
+
+const Q_CHARACTERS = `
+query ($page: Int) {
+  Page(page: $page, perPage: 25) {
+    characters(sort: FAVOURITES_DESC) {
+      id
+      name { full native }
+      image { large }
+      favourites
+      age
+      gender
+      bloodType
+      dateOfBirth { month day }
+      description(asHtml: false)
+      media(perPage: 1, sort: POPULARITY_DESC) {
+        nodes {
+          id format seasonYear averageScore
+          title { romaji english }
+          coverImage { extraLarge large color }
+        }
+      }
+    }
+  }
+}`;
+
+const Q_ACTIVITY = `
+query ($userId: Int, $since: Int) {
+  Page(page: 1, perPage: 50) {
+    activities(userId: $userId, type: ANIME_LIST, createdAt_greater: $since,
+               sort: ID_DESC) {
+      ... on ListActivity { status progress createdAt }
+    }
+  }
+}`;
+
+async function graphql(query, variables) {
+  const response = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ query, variables }),
+  });
+  const payload = await response.json();
+  if (payload.errors && payload.errors.length) {
+    throw new Error(payload.errors[0].message || "AniList rejected the query");
+  }
+  if (!payload.data) throw new Error("AniList returned no data");
+  return payload.data;
+}
+
+function seasonOf(date) {
+  const month = date.getMonth() + 1;
+  if (month <= 3)  return { season: "WINTER", year: date.getFullYear() };
+  if (month <= 6)  return { season: "SPRING", year: date.getFullYear() };
+  if (month <= 9)  return { season: "SUMMER", year: date.getFullYear() };
+  return { season: "FALL", year: date.getFullYear() };
+}
+
+function seasonAfter(current) {
+  const order = ["WINTER", "SPRING", "SUMMER", "FALL"];
+  const index = order.indexOf(current.season);
+  return index === 3
+    ? { season: "WINTER", year: current.year + 1 }
+    : { season: order[index + 1], year: current.year };
+}
+
+function pickTitle(title) {
+  return (title && (title.english || title.romaji)) || "Untitled";
+}
+
+function cleanDescription(text) {
+  if (!text) return "";
+  return text
+
+    .replace(/~!([\s\S]*?)!~/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/__/g, "")
+    .replace(/\*\*/g, "")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\(Source:[^)]*\)/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function splitProfile(text) {
+  if (!text) return { facts: [], prose: "" };
+  const pattern = /(?:__|\*\*)\s*([^_*:\n]{2,26}?)\s*:\s*(?:__|\*\*)\s*([^\n]*)/g;
+  const facts = [];
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    const label = match[1].trim();
+    const value = cleanDescription(match[2]).replace(/[.,;]\s*$/, "").trim();
+    if (value) facts.push({ label, value });
+  }
+  return { facts, prose: cleanDescription(text.replace(pattern, "\n")) };
+}
+
+function shapeMedia(media) {
+  const cover = media.coverImage || {};
+  const airing = media.nextAiringEpisode;
+  const studio = ((media.studios && media.studios.nodes) || [])[0];
+
+  const characters = ((media.characters && media.characters.nodes) || [])
+    .filter((node) => node.image && node.image.large && !/default\.(jpg|png)/i.test(node.image.large))
+    .map((node) => ({ name: node.name.full, image: node.image.large }));
+
+  return {
+    id: media.id,
+    title: pickTitle(media.title),
+    cover: cover.extraLarge || cover.large,
+    colour: cover.color,
+    episodes: media.episodes,
+    status: media.status,
+    format: media.format,
+    score: media.averageScore,
+    genres: (media.genres || []).slice(0, 3),
+    studio: studio ? studio.name : null,
+    synopsis: cleanDescription(media.description),
+    season: media.season,
+    seasonYear: media.seasonYear,
+    characters,
+    start: media.startDate || null,
+    nextEpisode: airing ? airing.episode : null,
+    airingAt: airing ? airing.airingAt : null,
+  };
+}
+
+function shapeEntry(entry) {
+  return { ...shapeMedia(entry.media), progress: entry.progress || 0 };
+}
+
+function shapeSeasonEntry(media) {
+  const cover = media.coverImage || {};
+  return {
+    id: media.id,
+    title: pickTitle(media.title),
+    cover: cover.extraLarge || cover.large,
+    colour: cover.color,
+    score: media.averageScore,
+    format: media.format,
+    genres: (media.genres || []).slice(0, 3),
+    start: media.startDate,
+  };
+}
+
+function episodesFromActivity(activity) {
+  if (!activity || !/watched/i.test(activity.status || "")) return 0;
+  const progress = String(activity.progress || "");
+  const range = progress.match(/(\d+)\s*-\s*(\d+)/);
+  if (range) return Math.max(1, Number(range[2]) - Number(range[1]) + 1);
+  return /\d/.test(progress) ? 1 : 0;
+}
+
+function seasonStartDate(block) {
+  const month = { WINTER: 0, SPRING: 3, SUMMER: 6, FALL: 9 }[block.season];
+  return new Date(block.year, month, 1);
+}
+
+async function loadFromAniList() {
+  const now = new Date();
+  const thisSeason = seasonOf(now);
+  const upcoming = seasonAfter(thisSeason);
+
+  const [listData, currentData, nextData] = await Promise.all([
+    graphql(Q_LISTS, { name: CONFIG.username }),
+    graphql(Q_SEASON, thisSeason),
+    graphql(Q_SEASON, upcoming),
+  ]);
+
+  const userId = listData.User ? listData.User.id : null;
+  const groups = (listData.MediaListCollection && listData.MediaListCollection.lists) || [];
+
+  const watching = [];
+  const planning = [];
+  const known = new Set();
+  const completed = [];
+  const tally = { PAUSED: 0, DROPPED: 0, REPEATING: 0 };
+
+  groups.forEach((group) => {
+    (group.entries || []).forEach((entry) => {
+      const shaped = shapeEntry(entry);
+      known.add(shaped.id);
+      if (group.status === "CURRENT" || group.status === "REPEATING") watching.push(shaped);
+      else if (group.status === "PLANNING") planning.push(shaped);
+      else if (group.status === "COMPLETED") completed.push(shaped.id);
+      if (tally[group.status] !== undefined) tally[group.status] += 1;
+    });
+  });
+
+  watching.sort((a, b) => {
+    if (!a.airingAt && !b.airingAt) return a.title.localeCompare(b.title);
+    if (!a.airingAt) return 1;
+    if (!b.airingAt) return -1;
+    return a.airingAt - b.airingAt;
+  });
+
+  const strip = (items) => items.filter((item) => !known.has(item.id));
+
+  const payload = {
+    savedAt: Math.floor(Date.now() / 1000),
+    watching,
+    planning,
+    current: {
+      ...thisSeason,
+      startsAt: Math.floor(seasonStartDate(thisSeason).getTime() / 1000),
+      items: strip(currentData.Page.media.map(shapeSeasonEntry)),
+    },
+    next: {
+      ...upcoming,
+      startsAt: Math.floor(seasonStartDate(upcoming).getTime() / 1000),
+      items: strip(nextData.Page.media.map(shapeSeasonEntry)),
+    },
+    suggestions: [],
+    weekly: null,
+    stats: null,
+    people: [],
+    random: [],
+  };
+
+  const seeds = watching.map((item) => item.id).concat(completed).filter(Boolean).slice(0, 20);
+
+  if (seeds.length) {
+    try {
+      const recommended = await graphql(Q_RECOMMENDED, { ids: seeds });
+      const pool = new Map();
+      recommended.Page.media.forEach((media) => {
+        ((media.recommendations && media.recommendations.nodes) || []).forEach((node) => {
+          const suggestion = node.mediaRecommendation;
+          if (!suggestion || known.has(suggestion.id) || pool.has(suggestion.id)) return;
+          pool.set(suggestion.id, { ...shapeMedia(suggestion), rating: node.rating || 0 });
+        });
+      });
+      payload.suggestions = [...pool.values()].sort((a, b) => b.rating - a.rating).slice(0, 25);
+    } catch (error) {
+      console.info("Recommendations unavailable:", error.message);
+    }
+  }
+
+  if (userId) {
+    try {
+      const since = Math.floor(Date.now() / 1000) - 7 * 86400;
+      const activity = await graphql(Q_ACTIVITY, { userId, since });
+      const episodes = (activity.Page.activities || [])
+        .reduce((sum, item) => sum + episodesFromActivity(item), 0);
+      payload.weekly = { episodes };
+    } catch (error) {
+      console.info("Activity unavailable:", error.message);
+    }
+  }
+
+  try {
+    const statsData = await graphql(Q_STATS, { name: CONFIG.username });
+    const anime = statsData.User && statsData.User.statistics
+      && statsData.User.statistics.anime;
+    if (anime) {
+      const topGenre = (anime.genres || [])[0];
+      const topStudio = (anime.studios || [])[0];
+      const topYear = (anime.releaseYears || [])[0];
+      const topFormat = (anime.formats || [])[0];
+      payload.stats = {
+        titles: anime.count,
+        episodes: anime.episodesWatched,
+        minutes: anime.minutesWatched,
+        meanScore: anime.meanScore,
+        topGenre: topGenre ? topGenre.genre : null,
+        topGenreCount: topGenre ? topGenre.count : 0,
+        topStudio: topStudio && topStudio.studio ? topStudio.studio.name : null,
+        topStudioCount: topStudio ? topStudio.count : 0,
+        topYear: topYear ? topYear.releaseYear : null,
+        topYearCount: topYear ? topYear.count : 0,
+        topFormat: topFormat ? topFormat.format : null,
+        watching: watching.length,
+        planning: planning.length,
+        completed: completed.length,
+        paused: tally.PAUSED,
+        dropped: tally.DROPPED,
+      };
+    }
+  } catch (error) {
+    console.info("Statistics unavailable:", error.message);
+    payload.stats = {
+      watching: watching.length,
+      planning: planning.length,
+      completed: completed.length,
+      paused: tally.PAUSED,
+      dropped: tally.DROPPED,
+    };
+  }
+
+  try {
+    const roll = (limit) => 1 + Math.floor(Math.random() * limit);
+    let random = await graphql(Q_RANDOM, { page: roll(900) });
+    const lastPage = random.Page.pageInfo && random.Page.pageInfo.lastPage;
+    if (!random.Page.media.length && lastPage) {
+      random = await graphql(Q_RANDOM, { page: roll(lastPage) });
+    }
+    payload.random = random.Page.media
+      .filter((media) => !known.has(media.id) && media.coverImage
+        && (media.coverImage.extraLarge || media.coverImage.large)
+        && media.description)
+      .map((media) => shapeMedia(media));
+  } catch (error) {
+    console.info("Random picks unavailable:", error.message);
+  }
+
+  try {
+    const page = 1 + Math.floor(Math.random() * 40);
+    const characterData = await graphql(Q_CHARACTERS, { page });
+    payload.people = (characterData.Page.characters || [])
+      .filter((node) => node.image && node.image.large
+        && !/default\.(jpg|png)/i.test(node.image.large)
+        && node.media && node.media.nodes && node.media.nodes.length)
+      .map((node) => {
+        const show = node.media.nodes[0];
+        const cover = show.coverImage || {};
+        const birth = node.dateOfBirth;
+        return {
+          id: node.id,
+          name: node.name.full,
+          native: node.name.native,
+          image: node.image.large,
+          favourites: node.favourites || 0,
+          age: node.age,
+          gender: node.gender,
+          bloodType: node.bloodType,
+          birthday: birth && birth.month
+            ? `${MONTHS[birth.month - 1]}${birth.day ? " " + birth.day : ""}`
+            : null,
+          profile: splitProfile(node.description),
+          show: {
+            title: pickTitle(show.title),
+            cover: cover.extraLarge || cover.large,
+            colour: cover.color,
+            format: show.format,
+            year: show.seasonYear,
+            score: show.averageScore,
+          },
+        };
+      });
+  } catch (error) {
+    console.info("Characters unavailable:", error.message);
+  }
+
+  return payload;
+}
+
+async function loadFromPi(url) {
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) throw new Error("Server responded with " + response.status);
+  const data = await response.json();
+  if (!data || !Array.isArray(data.watching)) throw new Error("Server sent no usable data");
+  return data;
+}
+
+let resolvedSource = null;
+
+async function loadData() {
+  if (resolvedSource === "anilist") return await loadFromAniList();
+  if (typeof resolvedSource === "string" && resolvedSource !== "auto") {
+    return await loadFromPi(resolvedSource);
+  }
+
+  if (CONFIG.dataUrl && CONFIG.dataUrl !== "auto") {
+    resolvedSource = CONFIG.dataUrl;
+    return await loadFromPi(CONFIG.dataUrl);
+  }
+
+  if (CONFIG.dataUrl === null) {
+    resolvedSource = "anilist";
+    return await loadFromAniList();
+  }
+
+  if (location.protocol === "http:" || location.protocol === "https:") {
+    try {
+      const data = await loadFromPi("/data.json");
+      resolvedSource = "/data.json";
+      console.info("Using /data.json from this host");
+      return data;
+    } catch (error) {
+      console.info("No local data source, querying AniList directly:", error.message);
+    }
+  }
+
+  const data = await loadFromAniList();
+  resolvedSource = "anilist";
+  return data;
+}
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    return data && Array.isArray(data.watching) ? data : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeCache(data) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (error) {  }
+}
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const SEASON_LABEL = { WINTER: "Winter", SPRING: "Spring", SUMMER: "Summer", FALL: "Fall" };
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[character]));
+}
+
+function countdownParts(airingAt) {
+  const remaining = airingAt - Math.floor(Date.now() / 1000);
+  if (remaining <= 0) return null;
+  return {
+    days: Math.floor(remaining / 86400),
+    hours: Math.floor((remaining % 86400) / 3600),
+    minutes: Math.floor((remaining % 3600) / 60),
+    seconds: remaining % 60,
+  };
+}
+
+function countdownHtml(airingAt) {
+  const parts = countdownParts(airingAt);
+  if (!parts) return `<span class="secs">Airing now</span>`;
+  const pad = (value) => String(value).padStart(2, "0");
+  const pieces = [];
+  if (parts.days) pieces.push(`${parts.days}<span class="unit">d</span>`);
+  if (parts.days || parts.hours) pieces.push(`${pad(parts.hours)}<span class="unit">h</span>`);
+  pieces.push(`${pad(parts.minutes)}<span class="unit">m</span>`);
+  pieces.push(`<span class="secs">${pad(parts.seconds)}<span class="unit secs">s</span></span>`);
+  return pieces.join("");
+}
+
+function airDateText(airingAt) {
+  if (!airingAt) return "";
+  const when = new Date(airingAt * 1000);
+  const today = new Date();
+  const sameDay = when.toDateString() === today.toDateString();
+  const tomorrow = new Date(today.getTime() + 86400000);
+  const isTomorrow = when.toDateString() === tomorrow.toDateString();
+  const clock = `${String(when.getHours()).padStart(2, "0")}:${String(when.getMinutes()).padStart(2, "0")}`;
+  if (sameDay) return `Today at ${clock}`;
+  if (isTomorrow) return `Tomorrow at ${clock}`;
+  return `${DAYS[when.getDay()]}, ${when.getDate()} ${MONTHS[when.getMonth()]} at ${clock}`;
+}
+
+function startDateText(start) {
+  if (!start) return "TBA";
+  if (start.day && start.month) return `${start.day} ${MONTHS[start.month - 1]}`;
+  if (start.month) return MONTHS[start.month - 1];
+  return start.year ? String(start.year) : "TBA";
+}
+
+function pendingEpisodes(item) {
+  if (!item.nextEpisode) return 0;
+  return Math.max(0, (item.nextEpisode - 1) - item.progress);
+}
+
+function airsWithin(item, seconds) {
+  if (!item.airingAt) return false;
+  const gap = item.airingAt - Math.floor(Date.now() / 1000);
+  return gap > 0 && gap <= seconds;
+}
+
+function airsToday(item) {
+  if (!item.airingAt) return false;
+  const when = new Date(item.airingAt * 1000);
+  const now = new Date();
+  return when.getFullYear() === now.getFullYear()
+    && when.getMonth() === now.getMonth()
+    && when.getDate() === now.getDate();
+}
+
+function standbyText(item) {
+  if (item.status === "NOT_YET_RELEASED") return { label: "Not yet aired", ready: false };
+  if (item.status === "CANCELLED") return { label: "Cancelled", ready: false };
+  if (item.episodes && item.progress < item.episodes) {
+    const left = item.episodes - item.progress;
+    return { label: `${left} episode${left === 1 ? "" : "s"} ready`, ready: true };
+  }
+  if (item.episodes && item.progress >= item.episodes) return { label: "Caught up", ready: false };
+  return { label: "No episode scheduled", ready: false };
+}
+
+function episodeGridHtml(item) {
+  const watched = item.progress || 0;
+  const total = item.episodes || null;
+  const aired = item.nextEpisode
+    ? item.nextEpisode - 1
+    : (item.status === "FINISHED" ? (total || 0) : 0);
+
+  const cell = (number) => {
+    if (number <= watched) return `<i class="seen"></i>`;
+    if (number <= aired) return `<i class="out"></i>`;
+    return `<i></i>`;
+  };
+
+  const length = total || Math.max(watched, aired);
+  if (!length || length > 60) return "";
+
+  const cells = [];
+  for (let number = 1; number <= length; number += 1) cells.push(cell(number));
+  return `<div class="episodes">${cells.join("")}</div>`;
+}
+
+function chipsHtml(item) {
+  const chips = (item.genres || []).map((genre) => `<span>${escapeHtml(genre)}</span>`);
+  if (item.studio) chips.push(`<span class="studio">${escapeHtml(item.studio)}</span>`);
+  return chips.length ? `<div class="chips">${chips.join("")}</div>` : "";
+}
+
+function facesHtml(item) {
+  const people = (item.characters || []).slice(0, 5);
+  if (people.length < 3) return "";
+  return `<div class="faces">${people.map(
+    (person) => `<div class="face" style="background-image:url('${escapeHtml(person.image)}')" title="${escapeHtml(person.name)}"></div>`
+  ).join("")}</div>`;
+}
+
+function daysUntil(timestamp) {
+  return Math.ceil((timestamp - Math.floor(Date.now() / 1000)) / 86400);
+}
+
+function titleClass(title) {
+  if (title.length > 44) return "title longer";
+  if (title.length > 26) return "title long";
+  return "title";
+}
+
+function hexToRgb(hex) {
+  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return [26, 30, 48];
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+function hslToRgb(hue, saturation, lightness) {
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const sector = (hue % 360) / 60;
+  const second = chroma * (1 - Math.abs((sector % 2) - 1));
+  const offset = lightness - chroma / 2;
+  const table = [
+    [chroma, second, 0], [second, chroma, 0], [0, chroma, second],
+    [0, second, chroma], [second, 0, chroma], [chroma, 0, second],
+  ];
+  const [red, green, blue] = table[Math.floor(sector) % 6];
+  return [red, green, blue].map((value) => Math.round((value + offset) * 255));
+}
+
+function readableAccent(hex) {
+  const [red, green, blue] = hexToRgb(hex).map((value) => value / 255);
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  const chroma = max - min;
+  const lightness = (max + min) / 2;
+
+  let hue = 0;
+  let saturation = 0;
+  if (chroma) {
+    saturation = lightness > 0.5 ? chroma / (2 - max - min) : chroma / (max + min);
+    if (max === red) hue = (green - blue) / chroma + (green < blue ? 6 : 0);
+    else if (max === green) hue = (blue - red) / chroma + 2;
+    else hue = (red - green) / chroma + 4;
+    hue *= 60;
+  }
+
+  const finalSaturation = chroma ? Math.max(saturation, 0.45) : 0;
+  const components = hslToRgb(hue, finalSaturation, Math.max(lightness, 0.58));
+  const lifted = hslToRgb(hue, finalSaturation * 0.85, Math.max(lightness, 0.78));
+  return {
+    css: `rgb(${components.join(", ")})`,
+    rgb: components.join(", "),
+    lift: lifted.join(", "),
+  };
+}
+
+function washTint(hex) {
+  const [r, g, b] = hexToRgb(hex);
+  return `${Math.round(r * 0.30) + 6}, ${Math.round(g * 0.30) + 7}, ${Math.round(b * 0.30) + 14}`;
+}
+
+async function readBattery() {
+  try {
+    if (typeof fully !== "undefined" && typeof fully.getBatteryLevel === "function") {
+      const level = Math.round(fully.getBatteryLevel());
+      const plugged = typeof fully.isPlugged === "function" ? fully.isPlugged() : null;
+      if (level >= 0) return { level, charging: plugged };
+    }
+  } catch (error) {  }
+
+  try {
+    if (typeof navigator.getBattery === "function") {
+      const battery = await navigator.getBattery();
+      return { level: Math.round(battery.level * 100), charging: battery.charging };
+    }
+  } catch (error) {  }
+
+  return null;
+}
+
+async function pollBattery() {
+  state.battery = await readBattery();
+  paintStatus();
+}
+
+function batteryHtml() {
+  const battery = state.battery;
+  if (!battery) return "";
+  const unplugged = battery.charging === false;
+  return `<span class="batt${unplugged ? " warn" : ""}">${battery.level}%${unplugged ? " ⚡" : ""}</span>`;
+}
+
+function watchingScreen(item, queue, online) {
+  const hasSchedule = Boolean(item.airingAt);
+  const standby = standbyText(item);
+  const facts = [item.format,
+                 item.season ? `${SEASON_LABEL[item.season]} ${item.seasonYear}` : null,
+                 item.score ? `${item.score}%` : null].filter(Boolean).join(" · ");
+
+  const total = item.episodes || null;
+  const ratio = total ? Math.min(1, item.progress / total) : 0;
+  const waiting = pendingEpisodes(item);
+  const imminent = airsWithin(item, 3600);
+
+  let middle;
+  if (waiting > 0) {
+    const first = item.progress + 1;
+    const headline = waiting === 1 ? `Episode ${first} is out` : `${waiting} episodes out`;
+    const detail = hasSchedule
+      ? `Episode ${item.nextEpisode} in <b data-airing="${item.airingAt}">${countdownHtml(item.airingAt)}</b>`
+      : `${waiting === 1 ? "Episode" : "Episodes"} ${first}${waiting > 1 ? `–${item.nextEpisode - 1}` : ""} ready to watch`;
+    middle = `<div class="pending">${escapeHtml(headline)}</div>
+              <p class="pending-sub">${detail}</p>`;
+  } else if (hasSchedule) {
+    middle = `<div class="countdown" data-airing="${item.airingAt}">${countdownHtml(item.airingAt)}</div>
+              <p class="when">Episode ${item.nextEpisode} · ${escapeHtml(airDateText(item.airingAt))}</p>
+              ${imminent ? `<p class="soon">Airing within the hour</p>` : ""}`;
+  } else {
+    middle = `<div class="standby${standby.ready ? " ready" : ""}">${escapeHtml(standby.label)}</div>
+              <p class="when">${total ? `All ${total} episodes listed` : "Episode count unknown"}</p>`;
+  }
+
+  const todayFlag = airsToday(item) ? `<span class="today">Today</span>` : "";
+
+  const grid = episodeGridHtml(item);
+  const faces = facesHtml(item);
+
+  return `
+    <div class="card">
+      <div class="poster" style="background-image:url('${escapeHtml(item.cover)}')"></div>
+      <div class="info">
+        <div class="eyebrow">
+          <span class="tag">Watching${todayFlag}</span>
+          <span class="meta" data-status></span>
+        </div>
+        <h1 class="${titleClass(item.title)}">${escapeHtml(item.title)}</h1>
+        ${facts ? `<p class="subtitle">${escapeHtml(facts)}</p>` : ""}
+        ${chipsHtml(item)}
+        ${middle}
+        ${faces}
+        <div class="foot">
+          <div class="progress-row">
+            <span>Watched</span>
+            <span class="count">${item.progress}<small> / ${total || "?"}</small></span>
+          </div>
+          ${grid || `<div class="bar"><i style="width:${(ratio * 100).toFixed(1)}%"></i></div>`}
+        </div>
+      </div>
+    </div>`;
+}
+
+function suggestionScreen(item, source, online) {
+  const facts = [item.format,
+                 item.season ? `${SEASON_LABEL[item.season]} ${item.seasonYear}` : null,
+                 item.score ? `${item.score}%` : null].filter(Boolean).join(" · ");
+  const labels = {
+    planning: "From your plan to watch",
+    new: "You might like",
+    random: "Pot luck",
+  };
+  const reasons = {
+    planning: "Already on your Planning list and waiting to be started.",
+    new: "Recommended by people who watched the shows on your list.",
+    random: "Pulled at random from the whole catalogue. Nothing to do with what is popular.",
+  };
+  const label = labels[source] || labels.new;
+  const reason = reasons[source] || reasons.new;
+
+  return `
+    <div class="card">
+      <div class="poster" style="background-image:url('${escapeHtml(item.cover)}')"></div>
+      <div class="info">
+        <div class="eyebrow">
+          <span class="tag"><span class="pill">${escapeHtml(label)}</span></span>
+          <span class="meta" data-status></span>
+        </div>
+        <h1 class="${titleClass(item.title)}">${escapeHtml(item.title)}</h1>
+        ${facts ? `<p class="subtitle">${escapeHtml(facts)}</p>` : ""}
+        ${chipsHtml(item)}
+        ${item.synopsis ? `<p class="synopsis">${escapeHtml(item.synopsis)}</p>` : ""}
+        <p class="reason">${escapeHtml(reason)}</p>
+        ${facesHtml(item)}
+        <div class="foot">
+          <div class="progress-row">
+            <span>${item.episodes ? `${item.episodes} episodes` : "Episode count unknown"}</span>
+            <span class="count">${item.status === "RELEASING" ? "Airing" : (item.status === "FINISHED" ? "Complete" : "Upcoming")}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function seasonScreen(block, page, pages, upcoming, online) {
+  let startsIn = "";
+  if (block.startsAt) {
+    const days = daysUntil(block.startsAt);
+    if (days > 0) startsIn = `<span class="starts-in">in ${days} day${days === 1 ? "" : "s"}</span>`;
+  }
+
+  const start = Math.min(
+    page * CONFIG.seasonPerPage,
+    Math.max(0, block.items.length - CONFIG.seasonPerPage)
+  );
+  const slice = block.items.slice(start, start + CONFIG.seasonPerPage);
+
+  const tiles = slice.map((entry) => `
+    <div class="tile">
+      <div class="art" style="background-image:url('${escapeHtml(entry.cover)}')">
+        <span class="overlay">
+          <span class="band">
+            <span class="air">${escapeHtml(startDateText(entry.start))}</span>
+            ${entry.format ? `<span>${escapeHtml(entry.format.replace(/_/g, " "))}</span>` : ""}
+            ${entry.score ? `<span class="rate">${entry.score}%</span>` : ""}
+          </span>
+          ${(entry.genres || []).length ? `<span class="band">${
+            entry.genres.slice(0, 2).map((genre) => `<span>${escapeHtml(genre)}</span>`).join("")
+          }</span>` : ""}
+        </span>
+      </div>
+      <h2>${escapeHtml(entry.title)}</h2>
+    </div>`).join("");
+
+  return `
+    <div class="season">
+      <div class="season-head">
+        <h1>${SEASON_LABEL[block.season] || block.season} ${block.year}${startsIn}</h1>
+        <span class="meta" data-status data-prefix="${page + 1} / ${pages}"></span>
+      </div>
+      <div class="grid">${tiles}</div>
+    </div>`;
+}
+
+function statsScreen(data, online) {
+  const stats = data.stats || {};
+  const weekly = data.weekly ? data.weekly.episodes : 0;
+  const days = stats.minutes ? stats.minutes / 1440 : 0;
+
+  const box = (value, caption, options = {}) =>
+    `<div class="box${options.wide ? " wide" : ""}">
+       <p class="num${options.text ? " text" : ""}${options.small ? " small" : ""}">${value}${
+         options.suffix ? `<small>${options.suffix}</small>` : ""}</p>
+       <p class="cap">${caption}</p>
+     </div>`;
+
+  const number = (value) => (value || 0).toLocaleString("en-GB");
+
+  return `
+    <div class="stats">
+      <header>
+        <h1>Stats</h1>
+        <span class="meta" data-status></span>
+      </header>
+      <div class="bento">
+        <div class="box week">
+          <p class="tag">Last seven days</p>
+          <p class="num">${weekly}</p>
+          <p class="cap">episode${weekly === 1 ? "" : "s"} watched</p>
+        </div>
+
+        ${box(number(stats.episodes), "episodes all time", { wide: true })}
+        ${box(days >= 1 ? days.toFixed(1) : "0", "days of runtime", { suffix: "d", small: true })}
+        ${box(stats.meanScore ? Math.round(stats.meanScore) : "—", "mean score",
+              { suffix: stats.meanScore ? "%" : "", small: true })}
+
+        ${box(stats.topGenre ? escapeHtml(stats.topGenre) : "—", "most watched genre",
+              { wide: true, text: true })}
+        ${box(stats.topStudio ? escapeHtml(stats.topStudio) : "—", "most watched studio",
+              { wide: true, text: true })}
+
+        ${box(stats.watching || 0, "watching", { small: true })}
+        ${box(stats.completed || 0, "completed", { small: true })}
+        ${box(stats.planning || 0, "planned", { small: true })}
+        ${box(stats.paused || 0, "paused", { small: true })}
+        ${box(stats.dropped || 0, "dropped", { small: true })}
+        ${box(stats.topYear || "—", "busiest year", { small: true })}
+      </div>
+    </div>`;
+}
+
+function personFactsHtml(person) {
+  const chips = [];
+  if (person.age) chips.push(String(person.age));
+  if (person.gender) chips.push(person.gender);
+  if (person.birthday) chips.push(person.birthday);
+  if (person.bloodType) chips.push(`Type ${person.bloodType}`);
+
+  const covered = /^(age|gender|birthday|date of birth|blood type)$/i;
+  const rows = ((person.profile && person.profile.facts) || [])
+    .filter((fact) => !covered.test(fact.label))
+    .slice(0, 4);
+
+  const chipHtml = chips.length
+    ? `<div class="chips facts">${chips.map((c) => `<span>${escapeHtml(c)}</span>`).join("")}</div>`
+    : "";
+  const rowHtml = rows.length
+    ? `<div class="chips detail">${rows.map((fact) =>
+        `<span><i>${escapeHtml(fact.label)}</i>${escapeHtml(fact.value)}</span>`).join("")}</div>`
+    : "";
+  return chipHtml + rowHtml;
+}
+
+function personScreen(person, online) {
+  const show = person.show || {};
+  const facts = [show.format ? show.format.replace(/_/g, " ") : null,
+                 show.year, show.score ? `${show.score}%` : null].filter(Boolean).join(" · ");
+
+  return `
+    <div class="person">
+      <div class="portrait" style="background-image:url('${escapeHtml(person.image)}')"></div>
+      <div class="about">
+        <div class="eyebrow">
+          <span class="tag"><span class="pill">Character</span></span>
+          <span class="meta" data-status></span>
+        </div>
+        <p class="name">${escapeHtml(person.name)}</p>
+        ${person.native ? `<p class="native">${escapeHtml(person.native)}</p>` : ""}
+        ${personFactsHtml(person)}
+        ${person.profile && person.profile.prose ? `<p class="bio">${escapeHtml(person.profile.prose)}</p>` : ""}
+        <div class="from">
+          ${show.cover ? `<div class="mini" style="background-image:url('${escapeHtml(show.cover)}')"></div>` : ""}
+          <div class="which">
+            <p class="cap">Appears in</p>
+            <p class="show">${escapeHtml(show.title || "Unknown")}</p>
+            ${facts ? `<p class="sub">${escapeHtml(facts)}</p>` : ""}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function noticeScreen(heading, body) {
+  return `<div class="notice"><h1>${escapeHtml(heading)}</h1><p>${body}</p></div>`;
+}
+
+const JIKAN = "https://api.jikan.moe/v4";
+
+function log(message) {
+  if (CONFIG.debug) console.info("[dashboard]", message);
+}
+
+const portraitCache = new Map();
+
+function looselyMatches(a, b) {
+  const key = (value) => String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .sort()
+    .join("");
+  const left = key(a);
+  const right = key(b);
+  if (!left || !right) return false;
+  return left === right || left.includes(right) || right.includes(left);
+}
+
+async function jikan(path, attempt = 0) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000);
+  try {
+    const response = await fetch(JIKAN + path, {
+      cache: "force-cache",
+      signal: controller.signal,
+    });
+    if ((response.status >= 500 || response.status === 429) && attempt < 1) {
+      clearTimeout(timer);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      return jikan(path, attempt + 1);
+    }
+    if (!response.ok) {
+      const error = new Error(`HTTP ${response.status}`);
+      error.transient = response.status >= 500 || response.status === 429;
+      throw error;
+    }
+    return await response.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function lookupPortraits(person) {
+  const found = await jikan(`/characters?q=${encodeURIComponent(person.name)}&limit=1`);
+  const match = (found.data || [])[0];
+
+  if (!match) {
+    log(`No MyAnimeList entry for ${person.name}`);
+    return [person.image];
+  }
+  if (!looselyMatches(match.name, person.name)) {
+    log(`Name mismatch: MAL "${match.name}" vs AniList "${person.name}"`);
+    return [person.image];
+  }
+
+  const shots = await jikan(`/characters/${match.mal_id}/pictures`);
+  const urls = (shots.data || [])
+    .map((picture) => picture.jpg && picture.jpg.image_url)
+    .filter(Boolean);
+
+  const list = [person.image];
+  urls.forEach((url) => { if (!list.includes(url)) list.push(url); });
+  const capped = list.slice(0, 8);
+  log(`${capped.length} portrait${capped.length === 1 ? "" : "s"} for ${person.name}`);
+  preload(capped.slice(1, 3));
+  return capped;
+}
+
+function extraPortraits(person) {
+  if (!CONFIG.extraPortraits) return Promise.resolve([person.image]);
+
+  if (!portraitCache.has(person.id)) {
+    portraitCache.set(person.id, lookupPortraits(person).catch((error) => {
+      log(`Portrait lookup failed for ${person.name}: ${error.message}`);
+      if (error.transient || error.name === "AbortError" || error instanceof TypeError) {
+        portraitCache.delete(person.id);
+      }
+      return [person.image];
+    }));
+  }
+  return portraitCache.get(person.id);
+}
+
+let portraitTimer = null;
+
+function stopPortraitCycle() {
+  if (portraitTimer) {
+    clearInterval(portraitTimer);
+    portraitTimer = null;
+  }
+}
+
+async function startPortraitCycle(person) {
+  stopPortraitCycle();
+  const mine = generation;
+  const shots = await extraPortraits(person);
+
+  if (mine !== generation) return;
+  if (shots.length < 2) {
+    log(`Only one portrait for ${person.name}; nothing to cycle`);
+    return;
+  }
+  log(`${shots.length} portraits for ${person.name}`);
+
+  let index = 0;
+  portraitTimer = setInterval(() => {
+    if (mine !== generation) { stopPortraitCycle(); return; }
+    const node = stages[liveStage].querySelector(".portrait");
+    if (!node) { stopPortraitCycle(); return; }
+    index = (index + 1) % shots.length;
+    node.style.opacity = "0";
+    setTimeout(() => {
+      node.style.backgroundImage = `url('${shots[index]}')`;
+      node.style.opacity = "1";
+    }, 260);
+  }, Math.max(1500, CONFIG.portraitSeconds * 1000));
+}
+
+const stages = [document.getElementById("stage-a"), document.getElementById("stage-b")];
+const wash = document.getElementById("wash");
+let liveStage = 1;
+let tickTimer = null;
+let generation = 0;
+
+function present(html, colour) {
+  generation += 1;
+  stopPortraitCycle();
+  const incoming = stages[1 - liveStage];
+  incoming.innerHTML = html;
+
+  if (colour !== undefined) {
+    const accent = readableAccent(colour);
+    const style = document.documentElement.style;
+    style.setProperty("--accent", accent.css);
+    style.setProperty("--accent-rgb", accent.rgb);
+    style.setProperty("--accent-lift", accent.lift);
+    style.setProperty("--wash", washTint(colour));
+  }
+
+  void incoming.offsetWidth;
+  incoming.classList.add("live");
+  stages[liveStage].classList.remove("live");
+  liveStage = 1 - liveStage;
+
+  startTicking();
+  paintStatus();
+}
+
+function startTicking() {
+  if (tickTimer) clearInterval(tickTimer);
+  const node = stages[liveStage].querySelector("[data-airing]");
+  if (!node) { tickTimer = setInterval(paintStatus, 15000); return; }
+  const airingAt = Number(node.dataset.airing);
+  tickTimer = setInterval(() => {
+    node.innerHTML = countdownHtml(airingAt);
+    paintStatus();
+  }, 1000);
+}
+
+function paintStatus() {
+  const now = new Date();
+  const clock = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const bits = [];
+  if (!state.online) bits.push(`<span class="warn">Offline</span>`);
+  const battery = batteryHtml();
+  if (battery) bits.push(battery);
+  bits.push(clock);
+  stages.forEach((stage) => {
+    stage.querySelectorAll("[data-status]").forEach((node) => {
+      const prefix = node.dataset.prefix;
+      const parts = prefix ? [prefix].concat(bits) : bits;
+      node.innerHTML = parts.join(`<span class="dot">·</span>`);
+    });
+  });
+}
+
+function preload(urls) {
+  urls.filter(Boolean).forEach((url) => { const image = new Image(); image.src = url; });
+}
+
+const state = {
+  data: null,
+  online: true,
+  battery: null,
+  modes: [],
+  modeIndex: 0,
+  watchIndex: 0,
+  suggestionIndex: 0,
+  seenPeople: new Set(),
+  pool: null,
+  poolStamp: null,
+  pageIndex: { current: 0, next: 0 },
+  timer: null,
+};
+
+function visibleWatching() {
+  const list = state.data.watching;
+  if (!CONFIG.airingOnly) return list;
+  const filtered = list.filter((item) => item.airingAt || pendingEpisodes(item) > 0);
+  return filtered.length ? filtered : list;
+}
+
+function pickPerson() {
+  const people = state.data.people || [];
+  if (!people.length) return null;
+
+  let unseen = people.filter((person) => !state.seenPeople.has(person.id));
+  if (!unseen.length) {
+    state.seenPeople.clear();
+    unseen = people;
+  }
+  const person = unseen[Math.floor(Math.random() * unseen.length)];
+  state.seenPeople.add(person.id);
+  return person;
+}
+
+function suggestionPool() {
+  if (!state.data) return [];
+  if (state.pool && state.poolStamp === state.data.savedAt) return state.pool;
+
+  const shuffle = (items) => items
+    .map((item) => ({ item, key: Math.random() }))
+    .sort((a, b) => a.key - b.key)
+    .map((wrapped) => wrapped.item);
+
+  const planning = shuffle(state.data.planning || []).slice(0, 5)
+    .map((item) => ({ item, source: "planning" }));
+  const fresh = shuffle(state.data.suggestions || []).slice(0, 5)
+    .map((item) => ({ item, source: "new" }));
+  const wild = shuffle(state.data.random || []).slice(0, 4)
+    .map((item) => ({ item, source: "random" }));
+
+  const mixed = [];
+  const longest = Math.max(planning.length, fresh.length, wild.length);
+  for (let index = 0; index < longest; index += 1) {
+    if (planning[index]) mixed.push(planning[index]);
+    if (fresh[index]) mixed.push(fresh[index]);
+    if (wild[index]) mixed.push(wild[index]);
+  }
+
+  state.pool = mixed;
+  state.poolStamp = state.data.savedAt;
+  return mixed;
+}
+
+function rebuildModes() {
+  const modes = [];
+  if (visibleWatching().length) modes.push("watching");
+  if (suggestionPool().length) modes.push("suggestion");
+  if ((state.data.people || []).length) modes.push("person");
+  if (state.data.stats || state.data.weekly) modes.push("stats");
+  if (state.data.current && state.data.current.items.length) modes.push("current");
+  if (state.data.next && state.data.next.items.length) modes.push("next");
+  state.modes = modes;
+  if (state.modeIndex >= modes.length) state.modeIndex = 0;
+}
+
+function pageCount(block) {
+  return Math.max(1, Math.ceil(block.items.length / CONFIG.seasonPerPage));
+}
+
+function show() {
+  clearTimeout(state.timer);
+
+  if (!state.data || !state.modes.length) {
+    present(noticeScreen(
+      "Nothing to show",
+      `No titles came back for <code>${escapeHtml(CONFIG.username)}</code>. Check the username at the top of this file, and that the AniList profile is public or semi-public.`
+    ), "#2a3350");
+    state.timer = setTimeout(show, 30000);
+    return;
+  }
+
+  const mode = state.modes[state.modeIndex];
+
+  if (mode === "person") {
+    const person = pickPerson();
+    present(personScreen(person, state.online), person.show.colour);
+    startPortraitCycle(person);
+    state.timer = setTimeout(() => {
+      nextMode(false);
+      show();
+    }, CONFIG.screenSeconds * 1000);
+    return;
+  }
+
+  if (mode === "stats") {
+    present(statsScreen(state.data, state.online), "#3a4a78");
+    state.timer = setTimeout(() => { nextMode(false); show(); }, CONFIG.screenSeconds * 1000);
+    return;
+  }
+
+  if (mode === "suggestion") {
+    const pool = suggestionPool();
+    const pick = pool[state.suggestionIndex % pool.length];
+    present(suggestionScreen(pick.item, pick.source, state.online), pick.item.colour);
+    state.timer = setTimeout(() => {
+      state.suggestionIndex += 1;
+      nextMode(false);
+      show();
+    }, CONFIG.screenSeconds * 1000);
+    return;
+  }
+
+  if (mode === "watching") {
+    const list = visibleWatching();
+    state.watchIndex %= list.length;
+    const item = list[state.watchIndex];
+    const queue = list.slice(state.watchIndex + 1).concat(list.slice(0, state.watchIndex));
+
+    present(watchingScreen(item, queue, state.online), item.colour);
+    preload(queue.slice(0, 3).map((entry) => entry.cover));
+
+    state.timer = setTimeout(() => {
+      state.watchIndex += 1;
+      if (state.watchIndex >= list.length) { state.watchIndex = 0; nextMode(false); }
+      show();
+    }, CONFIG.screenSeconds * 1000);
+    return;
+  }
+
+  const block = mode === "current" ? state.data.current : state.data.next;
+  const pages = pageCount(block);
+  const page = state.pageIndex[mode] % pages;
+  const first = block.items[page * CONFIG.seasonPerPage];
+
+  present(seasonScreen(block, page, pages, mode === "next", state.online),
+          first ? first.colour : "#2a3350");
+  preload(block.items.slice((page + 1) * CONFIG.seasonPerPage,
+                            (page + 2) * CONFIG.seasonPerPage).map((entry) => entry.cover));
+
+  state.timer = setTimeout(() => {
+    state.pageIndex[mode] = page + 1;
+    if (state.pageIndex[mode] >= pages) { state.pageIndex[mode] = 0; nextMode(false); }
+    show();
+  }, CONFIG.screenSeconds * 1000);
+}
+
+function nextMode(redraw = true) {
+  if (!state.modes.length) return;
+  state.modeIndex = (state.modeIndex + 1) % state.modes.length;
+  if (redraw) show();
+}
+
+function nextItem() {
+  const mode = state.modes[state.modeIndex];
+  if (mode === "suggestion") {
+    state.suggestionIndex += 1;
+  } else if (mode === "person") {
+  } else if (mode === "stats") {
+    nextMode(false);
+  } else if (mode === "watching") {
+    state.watchIndex = (state.watchIndex + 1) % visibleWatching().length;
+  } else if (mode) {
+    const block = mode === "current" ? state.data.current : state.data.next;
+    state.pageIndex[mode] = (state.pageIndex[mode] + 1) % pageCount(block);
+  }
+  show();
+}
+
+async function refresh() {
+  try {
+    const data = await loadData();
+    state.data = data;
+    state.online = true;
+    writeCache(data);
+    rebuildModes();
+  } catch (error) {
+    state.online = false;
+    console.warn("Refresh failed:", error);
+    if (!state.data) {
+      const cached = readCache();
+      if (cached) { state.data = cached; rebuildModes(); }
+    }
+    if (!state.data) {
+      const viaFile = location.protocol === "file:";
+      const hint = viaFile
+        ? `This page was opened straight off disk, so the browser treats its origin as <code>null</code> and blocks the request to AniList. Serve it over http instead:<br><br><code>python3 -m http.server 8000</code><br><br>then open <code>http://localhost:8000/</code>.`
+        : `Check the network, and that the username at the top of this file is right. If a server is meant to supply the data, confirm it answers at <code>/data.json</code>.`;
+      present(noticeScreen("Can't load data", `${escapeHtml(error.message)}<br><br>${hint}`), "#7a3340");
+      return;
+    }
+  }
+  if (!state.timer) show();
+}
+
+let wakeLock = null;
+
+async function holdScreenAwake() {
+  if (!("wakeLock" in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => { wakeLock = null; });
+  } catch (error) {
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    if (!wakeLock) holdScreenAwake();
+    paintStatus();
+    startTicking();
+  }
+});
+
+function flash(side) {
+  const node = document.getElementById(side === "left" ? "flash-left" : "flash-right");
+  node.classList.add("lit");
+  setTimeout(() => node.classList.remove("lit"), 110);
+}
+
+document.getElementById("zone-left").addEventListener("click", () => { flash("left"); nextMode(); });
+document.getElementById("zone-right").addEventListener("click", () => { flash("right"); nextItem(); });
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "ArrowLeft") { flash("left"); nextMode(); }
+  if (event.key === "ArrowRight") { flash("right"); nextItem(); }
+});
+
+const startupCache = readCache();
+if (startupCache) {
+  state.data = startupCache;
+  state.online = false;
+  rebuildModes();
+  show();
+} else {
+  present(noticeScreen("Loading", "Fetching your list and the seasonal charts."), "#2a3350");
+}
+
+holdScreenAwake();
+pollBattery();
+setInterval(pollBattery, 60000);
+refresh();
+setInterval(refresh, CONFIG.refreshMinutes * 60 * 1000);
+</script>
+</body>
+</html>
